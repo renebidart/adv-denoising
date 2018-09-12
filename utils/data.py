@@ -14,7 +14,7 @@ from PIL import Image
 
 
 class FilesDFImageDataset(Dataset):
-    def __init__(self, files_df, transforms=None, return_loc=False, path_colname='path'):
+    def __init__(self, files_df, transforms=None, path_colname='path', adv_path_colname=None, return_loc=False):
         """
         files_df: Pandas Dataframe containing the class and path of an image
         transforms: result of transforms.Compose()
@@ -23,24 +23,37 @@ class FilesDFImageDataset(Dataset):
         """
         self.files = files_df
         self.transforms = transforms
-        self.return_loc = return_loc
         self.path_colname = path_colname
+        self.adv_path_colname = adv_path_colname
+        self.return_loc = return_loc
+
 
     def __getitem__(self, index):
         img = Image.open(self.files[self.path_colname].iloc[index]).convert('RGB') # incase of greyscale
         label =  self.files['class'].iloc[index]
         if self.transforms is not None:
             img = self.transforms(img)
-        if self.return_loc:
-            return img, label, self.files[self.path_colname].iloc[index]
-        else:
+
+        if self.adv_path_colname and not self.return_loc:
+            adv_img = Image.open(self.files[self.adv_path_colname].iloc[index]).convert('RGB') # incase of greyscale
+            if self.transforms is not None:
+                adv_img = self.transforms(adv_img)
+            return img, adv_img, label
+        elif self.adv_path_colname and self.return_loc:
+            loc = (self.files[self.path_colname].iloc[index], self.files[self.adv_path_colname].iloc[index])
+            return img, adv_img, label, loc
+        elif not self.adv_path_colname and not self.return_loc:
             return img, label
+        elif not self.adv_path_colname and self.return_loc:
+            loc = self.files[self.path_colname].iloc[index]
+            return img, label, loc
 
     def __len__(self):
         return len(self.files)
 
 
-def make_generators_cifar(PATH, batch_size, num_workers, train_cifar, files_df=None, size=32, return_loc=False):
+def make_generators_DF_cifar(files_df, batch_size, num_workers, size=32, 
+                          path_colname='path', adv_path_colname=None, return_loc=False):
     """
     files_df: Dict containing train and val Pandas Dataframes
     Uses standard cifar augmentation and nomalization.
@@ -60,7 +73,8 @@ def make_generators_cifar(PATH, batch_size, num_workers, train_cifar, files_df=N
     datasets = {}
     dataloaders = {}
 
-    datasets = {x: FilesDFImageDataset(files_df[x], data_transforms[x], return_loc=return_loc)
+    datasets = {x: FilesDFImageDataset(files_df[x], data_transforms[x], path_colname=path_colname, 
+                                        adv_path_colname=adv_path_colname, return_loc=return_loc)
                                         for x in list(data_transforms.keys())}
 
     dataloaders = {x: torch.utils.data.DataLoader(datasets[x], batch_size=batch_size, 
