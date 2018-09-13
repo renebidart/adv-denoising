@@ -55,20 +55,6 @@ def net_from_args(args, num_classes, IM_SIZE):
     elif (args.net_type == 'wide-resnet'):
         net = Wide_ResNet(args.depth, args.widen_factor, args.dropout, num_classes, IM_SIZE)
         file_name = 'wide-resnet-'+str(args.depth)+'x'+str(args.widen_factor)
-    elif (args.net_type == 'hgd'):
-        fwd_out = [64, 128, 256, 256, 256]
-        num_fwd = [2, 3, 3, 3, 3]
-        back_out = [64, 128, 256, 256]
-        num_back = [2, 3, 3, 3]
-        fwd_in = 3
-        net = DenoiseHGD(32, 32, fwd_in, fwd_out, num_fwd, back_out, num_back)
-        file_name = 'hgd'
-    elif (args.net_type == 'unet'):
-        net = UNet(3, 3, args.stochastic)
-        if args.stochastic:
-            file_name = 'unet_stochastic'
-        else:
-            file_name = 'unet_stochastic'
     else:
         print('Error : Network should be either [LeNet / VGGNet / ResNet / Wide_ResNet')
         sys.exit(0)
@@ -84,13 +70,17 @@ def denoise_from_args(args, IM_SIZE):
         fwd_in = 3
         net = DenoiseHGD(IM_SIZE, IM_SIZE, fwd_in, fwd_out, num_fwd, back_out, num_back)
         file_name = 'hgd'
-    elif (args.denoise_type == 'unet'):
-        net = UNet(3, 3)
-        file_name = 'unet'
+    if (args.denoise_type == 'unet'):
+        net = UNet(3, 3, args.stochastic)
+        if args.stochastic:
+            file_name = 'unet_stochastic'
+        else:
+            file_name = 'unet'
     else:
         print('Error : Denoiser should be either [hgd / unet ')
         sys.exit(0)
     return net, file_name
+
 
 def get_attack(attack_type, fmodel):
     if (attack_type == 'FGSM'):

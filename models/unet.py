@@ -8,6 +8,7 @@ from models.StochasticPool2d import StochasticPool2d
 class UNet(nn.Module):
     def __init__(self, n_channels, n_classes, stochastic=False):
         super(UNet, self).__init__()
+        print('Initializing Unet with stochastic: ', stochastic)
         self.inc = inconv(n_channels, 64)
         self.down1 = down(64, 128, stochastic=stochastic)
         self.down2 = down(128, 256, stochastic=stochastic)

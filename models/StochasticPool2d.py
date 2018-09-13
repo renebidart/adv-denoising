@@ -16,7 +16,7 @@ class StochasticPool2d(nn.Module):
          same: override padding and enforce same padding, boolean
     """
     def __init__(self, kernel_size=2, stride=2, padding=0, same=False):
-        super(MedianPool2d, self).__init__()
+        super(StochasticPool2d, self).__init__()
         self.kernel_size = _pair(kernel_size) # I don't know what this is but it works
         self.stride = _pair(stride)
         self.padding = _quadruple(padding)  # convert to l, r, t, b
@@ -43,12 +43,36 @@ class StochasticPool2d(nn.Module):
         return padding
     
     def forward(self, x):
+        # because multinomial likes to fail on GPU when all values are equal 
+        # Try randomly sampling without calling the get_random function a million times
         init_size = x.shape
-        x = F.pad(x, self._padding(x), mode='reflect')
+
+        # x = F.pad(x, self._padding(x), mode='reflect')
         x = x.unfold(2, self.kernel_size[0], self.stride[0]).unfold(3, self.kernel_size[1], self.stride[1])
-        x = x.contiguous().view(x.size()[:4] + (-1,))
-        x = torch.stack([
-                 x_i[torch.multinomial(x_i, num_samples=1)] for i, x_i in enumerate(torch.unbind(x, dim=0), 0)
-                ], dim=0)
+        x = x.contiguous().view(-1, 4)
+        idx = torch.randint(0, x.shape[1], size=(x.shape[0],)).type(torch.cuda.LongTensor)
+        x = x.contiguous().view(-1)
+        x = torch.take(x, idx)
         x = x.contiguous().view(init_size[0], init_size[1], int(init_size[2]/2), int(init_size[3]/2))
         return x
+
+
+
+        # def gen_random(values):
+        #     if torch.sum(values) != 0:
+        #         idx = torch.multinomial(values, num_samples=1)
+        #     else:
+        #         idx = torch.randint(0, values.shape[0], size=(1,)).type(torch.LongTensor)
+        #     return values[idx]
+
+        # init_size = x.shape
+
+        # x = F.pad(x, self._padding(x), mode='reflect')
+        # x = x.unfold(2, self.kernel_size[0], self.stride[0]).unfold(3, self.kernel_size[1], self.stride[1])
+        # x = x.contiguous().view(-1, 4)
+
+        # x = torch.stack([
+        #          gen_random(x_i) for i, x_i in enumerate(torch.unbind(x, dim=0), 0)
+        #         ], dim=0)
+        # x = x.contiguous().view(init_size[0], init_size[1], int(init_size[2]/2), int(init_size[3]/2))
+        # return x
