@@ -34,10 +34,13 @@ class FilesDFImageDataset(Dataset):
         if self.transforms is not None:
             img = self.transforms(img)
 
-        if self.adv_path_colname and not self.return_loc:
+        if self.adv_path_colname:
             adv_img = Image.open(self.files[self.adv_path_colname].iloc[index]).convert('RGB') # incase of greyscale
             if self.transforms is not None:
                 adv_img = self.transforms(adv_img)
+
+        # return the right stuff in a messy way:
+        if self.adv_path_colname and not self.return_loc:
             return img, adv_img, label
         elif self.adv_path_colname and self.return_loc:
             loc = (self.files[self.path_colname].iloc[index], self.files[self.adv_path_colname].iloc[index])

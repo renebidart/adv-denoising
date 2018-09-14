@@ -92,9 +92,6 @@ def validate_epoc_denoise(val_loader, denoise_model, requires_control, device):
             else:
                 orig_pred, adv_pred, loss, closs = denoise_model(orig, adv, requires_control = True)
 
-            # orig_acc.append(float(torch.sum(orig_pred.item().cpu().max(1) == label)/len(label)), target.size(0))
-            # adv_acc.append(float(torch.sum(adv_pred.item().cpu().max(1) == label)/len(label)), target.size(0))
-            # losses.update(loss.item(), target.size(0))
             curr_orig_acc, prec5 = accuracy(orig_pred, target, topk=(1, 5))
             curr_adv_acc, prec5 = accuracy(adv_pred, target, topk=(1, 5))
             orig_acc.update(curr_orig_acc[0], target.size(0))
