@@ -15,7 +15,7 @@ from PIL import Image
 
 from utils.data import make_generators_DF_cifar
 
-def evaluate_adv_files_df(files_df, classifier, denoiser, denoise_model, device):
+def evaluate_adv_files_df(files_df, denoise_model, device):
     results = pd.DataFrame()
     
     dataloaders = make_generators_DF_cifar(files_df, batch_size=5, num_workers=4, size=32, 
@@ -37,7 +37,7 @@ def evaluate_adv_files_df(files_df, classifier, denoiser, denoise_model, device)
                                           'denoised_adv_pred': int(denoised_adv_pred[i].argmax().cpu().numpy())
                                          }, ignore_index=True)
         return results
-    
+
 def get_metrics(results):
     total = len(results)
     orig_acc = len(results[results['true_label']==results['orig_pred']])/total

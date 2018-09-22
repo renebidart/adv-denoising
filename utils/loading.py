@@ -13,10 +13,10 @@ from torch.utils.data.dataset import Dataset
 
 sys.path.insert(0,'/media/rene/code/foolbox')
 import foolbox
-from foolbox.attacks import FGSM, SinglePixelAttack, BoundaryAttack, LBFGSAttack
+from foolbox.attacks import FGSM, SinglePixelAttack, BoundaryAttack, LBFGSAttack, ProjectedGradientDescent
 
 from models.cifar import ResNet, VGG, Wide_ResNet
-from models import DenoiseHGD, UNet
+from models import DenoiseHGD, UNet, DenoiseLoss, DenoiseNet
 
 
 def load_net_cifar(model_loc):
@@ -34,8 +34,17 @@ def load_net_cifar(model_loc):
         model = ResNet(int(model_file.split('-')[1]), 10, 32)
     elif (model_name == 'wide'):
         model = Wide_ResNet(model_file.split('-')[2][0:2], model_file.split('-')[2][2:4], 0, 10, 32)
+    elif (model_name == 'unet'):
+        # this is a terrible way to do it but should be saving class, den parameters to load them individually
+        loss = DenoiseLoss(n=1, hard_mining=0, norm=False)
+        classifier = ResNet(50, num_classes=10, IM_SIZE=32)
+        if (Path(model_loc).name.rsplit('_')[1] == 'model'):
+            denoiser = UNet(3, 3, stochastic=False)
+        elif (Path(model_loc).name.rsplit('_')[1] == 'stochastic'):
+            denoiser = UNet(3, 3, stochastic=True)
+        model = DenoiseNet(classifer=classifier, denoiser=denoiser, loss=loss)
     else:
-        print('Error : Network should be either [LeNet / VGGNet / ResNet / Wide_ResNet')
+        print('Error : Network should be either [LeNet / VGGNet / ResNet / Wide_ResNet / unet')
         sys.exit(0)
     model.load_state_dict(torch.load(model_loc)['state_dict'])
     return model
@@ -91,6 +100,8 @@ def get_attack(attack_type, fmodel):
         attack  = foolbox.attacks.BoundaryAttack(fmodel)
     elif (attack_type == 'lbfgs'):
         attack  = foolbox.attacks.LBFGSAttack(fmodel)
+    elif (attack_type == 'pgd'):
+        attack  = foolbox.attacks.ProjectedGradientDescent(fmodel)
     else:
         print('Error: Invalid attack_type')
         sys.exit(0)

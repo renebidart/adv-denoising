@@ -1,11 +1,8 @@
 # Denoising Adversarial Images
 
-## TODO
-* Get proper evaluation criteria (attacks, comparisions, etc.)
-* Make nice evaluations in notebook
-* Test stochastic unet denoiser
-* Try with more models / datasets.
-* Lit Review
+
+## Denoising is mostly useless for adversarial attacks
+Any standard denoiser can just be attacked as a normal model by treating the denoiser+model as a new model. Adding stochastic pooling into this doesn't help. My guess is that generative models are the only way.
 
 
 ## How to get it going:

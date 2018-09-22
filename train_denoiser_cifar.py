@@ -18,7 +18,7 @@ from torch import nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 
-with torch.cuda.device(1):
+with torch.cuda.device(0):
     from models.cifar import resnet
     from utils.data import make_generators_DF_cifar
     from utils.train_val_denoise import train_epoch_denoise, validate_epoc_denoise, save_checkpoint
