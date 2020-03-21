@@ -51,7 +51,7 @@ class StochasticPool2d(nn.Module):
         x = x.unfold(2, self.kernel_size[0], self.stride[0]).unfold(3, self.kernel_size[1], self.stride[1])
         x = x.contiguous().view(-1, 4)
         idx = torch.randint(0, x.shape[1], size=(x.shape[0],)).type(torch.cuda.LongTensor)
-        x = x.contiguous().view(-1)
+        x = x.contiguous().view(-1, self.kernel_size[0]*self.kernel_size[1])
         x = torch.take(x, idx)
         x = x.contiguous().view(init_size[0], init_size[1], int(init_size[2]/2), int(init_size[3]/2))
         return x

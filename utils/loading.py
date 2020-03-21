@@ -14,6 +14,7 @@ from torch.utils.data.dataset import Dataset
 sys.path.insert(0,'/media/rene/code/foolbox')
 import foolbox
 from foolbox.attacks import FGSM, SinglePixelAttack, BoundaryAttack, LBFGSAttack, ProjectedGradientDescent
+from foolbox.attacks import SaltAndPepperNoiseAttack, AdditiveGaussianNoiseAttack, PointwiseAttack
 
 from models.cifar import ResNet, VGG, Wide_ResNet
 from models import DenoiseHGD, UNet, DenoiseLoss, DenoiseNet
